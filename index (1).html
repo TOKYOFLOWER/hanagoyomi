@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>花市場レポート変換ツール</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sage: #5B7B5E;
+    --sage-light: #8FAE8F;
+    --sage-pale: #E8F0E8;
+    --cream: #FDFBF7;
+    --warm-white: #FFF9F0;
+    --bark: #3D2B1F;
+    --petal: #E8A0BF;
+    --petal-light: #F5D5E5;
+    --gold: #C9A96E;
+    --shadow: rgba(61, 43, 31, 0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--cream);
+    color: var(--bark);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Decorative background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    right: -30%;
+    width: 80vw;
+    height: 80vw;
+    background: radial-gradient(circle, var(--sage-pale) 0%, transparent 70%);
+    opacity: 0.5;
+    z-index: 0;
+    pointer-events: none;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -40%;
+    left: -20%;
+    width: 60vw;
+    height: 60vw;
+    background: radial-gradient(circle, var(--petal-light) 0%, transparent 70%);
+    opacity: 0.3;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 40px 24px 60px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 48px;
+    animation: fadeDown 0.8s ease-out;
+  }
+  .header-icon {
+    font-size: 42px;
+    margin-bottom: 12px;
+    filter: drop-shadow(0 2px 4px var(--shadow));
+  }
+  .header h1 {
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--sage);
+    letter-spacing: 0.02em;
+    margin-bottom: 8px;
+  }
+  .header p {
+    font-size: 13px;
+    color: var(--sage-light);
+    font-weight: 300;
+    letter-spacing: 0.04em;
+  }
+
+  /* Card */
+  .card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 4px 24px var(--shadow), 0 1px 3px rgba(0,0,0,0.04);
+    padding: 36px 32px;
+    margin-bottom: 24px;
+    animation: fadeUp 0.8s ease-out 0.15s both;
+  }
+
+  /* Drop Zone */
+  .drop-zone {
+    border: 2px dashed var(--sage-light);
+    border-radius: 16px;
+    padding: 48px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: linear-gradient(135deg, var(--sage-pale) 0%, var(--warm-white) 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  .drop-zone::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 20px,
+      rgba(91,123,94,0.02) 20px,
+      rgba(91,123,94,0.02) 40px
+    );
+    pointer-events: none;
+  }
+  .drop-zone:hover, .drop-zone.dragover {
+    border-color: var(--sage);
+    background: linear-gradient(135deg, #d8ead8 0%, var(--warm-white) 100%);
+    transform: scale(1.01);
+    box-shadow: 0 8px 32px rgba(91,123,94,0.15);
+  }
+  .drop-zone-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    display: block;
+    transition: transform 0.3s ease;
+  }
+  .drop-zone:hover .drop-zone-icon {
+    transform: translateY(-4px);
+  }
+  .drop-zone h3 {
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--sage);
+    margin-bottom: 6px;
+  }
+  .drop-zone p {
+    font-size: 12px;
+    color: #999;
+  }
+
+  #file-input { display: none; }
+
+  /* File info */
+  .file-info {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: var(--sage-pale);
+    border-radius: 12px;
+    margin-top: 20px;
+    animation: fadeUp 0.4s ease-out;
+  }
+  .file-info.show { display: flex; }
+  .file-info-icon { font-size: 28px; }
+  .file-info-text { flex: 1; }
+  .file-info-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--bark);
+  }
+  .file-info-size {
+    font-size: 11px;
+    color: var(--sage-light);
+  }
+  .file-info-remove {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: #aaa;
+    transition: color 0.2s;
+    padding: 4px;
+  }
+  .file-info-remove:hover { color: var(--bark); }
+
+  /* Settings */
+  .settings {
+    animation: fadeUp 0.8s ease-out 0.3s both;
+  }
+  .settings h2 {
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--sage);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .field {
+    margin-bottom: 16px;
+  }
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: #777;
+    margin-bottom: 6px;
+    letter-spacing: 0.03em;
+  }
+  .field input, .field select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: 'Noto Sans JP', sans-serif;
+    color: var(--bark);
+    background: white;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+  .field input:focus, .field select:focus {
+    border-color: var(--sage);
+    box-shadow: 0 0 0 3px rgba(91,123,94,0.1);
+  }
+
+  /* Button */
+  .submit-btn {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, var(--sage) 0%, #4A6B4D 100%);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-size: 15px;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.06em;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 16px rgba(91,123,94,0.3);
+    margin-top: 8px;
+    animation: fadeUp 0.8s ease-out 0.45s both;
+  }
+  .submit-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(91,123,94,0.4);
+  }
+  .submit-btn:active:not(:disabled) {
+    transform: translateY(0);
+  }
+  .submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Progress */
+  .progress-area {
+    display: none;
+    margin-top: 24px;
+    animation: fadeUp 0.4s ease-out;
+  }
+  .progress-area.show { display: block; }
+  .progress-bar-track {
+    height: 6px;
+    background: var(--sage-pale);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--sage), var(--petal));
+    border-radius: 3px;
+    width: 0%;
+    transition: width 0.6s ease;
+  }
+  .progress-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: #bbb;
+    transition: color 0.3s;
+  }
+  .step.active { color: var(--sage); font-weight: 500; }
+  .step.done { color: var(--sage-light); }
+  .step-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    background: #eee;
+    transition: all 0.3s;
+    flex-shrink: 0;
+  }
+  .step.active .step-icon {
+    background: var(--sage);
+    color: white;
+    animation: pulse 1.5s infinite;
+  }
+  .step.done .step-icon {
+    background: var(--sage-light);
+    color: white;
+  }
+
+  /* Result */
+  .result {
+    display: none;
+    text-align: center;
+    padding: 32px;
+    animation: fadeUp 0.6s ease-out;
+  }
+  .result.show { display: block; }
+  .result-icon { font-size: 48px; margin-bottom: 12px; }
+  .result h3 {
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 18px;
+    color: var(--sage);
+    margin-bottom: 6px;
+  }
+  .result p {
+    font-size: 13px;
+    color: #999;
+    margin-bottom: 20px;
+  }
+  .result a {
+    display: inline-block;
+    padding: 12px 28px;
+    background: var(--sage-pale);
+    color: var(--sage);
+    text-decoration: none;
+    border-radius: 10px;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+  .result a:hover {
+    background: var(--sage);
+    color: white;
+  }
+
+  /* Error */
+  .error-msg {
+    display: none;
+    padding: 14px 18px;
+    background: #FFF0F0;
+    border: 1px solid #FFCCCC;
+    border-radius: 12px;
+    color: #C0392B;
+    font-size: 13px;
+    margin-top: 16px;
+    animation: fadeUp 0.4s ease-out;
+  }
+  .error-msg.show { display: block; }
+
+  /* Animations */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(91,123,94,0.3); }
+    50% { box-shadow: 0 0 0 6px rgba(91,123,94,0); }
+  }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    .container { padding: 24px 16px 40px; }
+    .card { padding: 24px 20px; }
+    .drop-zone { padding: 36px 16px; }
+    .header h1 { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="header-icon">🌿</div>
+    <h1>花市場レポート変換ツール</h1>
+    <p>市場報告書 → お客様向け情報シートに自動変換</p>
+  </div>
+
+  <div class="card">
+    <div class="drop-zone" id="dropZone">
+      <span class="drop-zone-icon">📄</span>
+      <h3>PDFファイルをドラッグ＆ドロップ</h3>
+      <p>またはクリックしてファイルを選択</p>
+    </div>
+    <input type="file" id="file-input" accept=".pdf">
+    <div class="file-info" id="fileInfo">
+      <span class="file-info-icon">📋</span>
+      <div class="file-info-text">
+        <div class="file-info-name" id="fileName"></div>
+        <div class="file-info-size" id="fileSize"></div>
+      </div>
+      <button class="file-info-remove" id="fileRemove" title="削除">✕</button>
+    </div>
+  </div>
+
+  <div class="card settings">
+    <h2>⚙️ 設定</h2>
+    <div class="field">
+      <label>Google Apps Script Web App URL</label>
+      <input type="url" id="gasUrl" placeholder="https://script.google.com/macros/s/xxxxx/exec"
+             value="">
+    </div>
+    <div class="field">
+      <label>タブ名（自動入力）</label>
+      <input type="text" id="tabName" placeholder="例：2月お花情報">
+    </div>
+  </div>
+
+  <button class="submit-btn" id="submitBtn" disabled>
+    🌸 変換してシートに書き込む
+  </button>
+
+  <div class="progress-area" id="progressArea">
+    <div class="progress-bar-track">
+      <div class="progress-bar-fill" id="progressBar"></div>
+    </div>
+    <div class="progress-steps">
+      <div class="step" id="step1">
+        <span class="step-icon">1</span>
+        <span>PDFからテキストを抽出中...</span>
+      </div>
+      <div class="step" id="step2">
+        <span class="step-icon">2</span>
+        <span>GASに送信中...</span>
+      </div>
+      <div class="step" id="step3">
+        <span class="step-icon">3</span>
+        <span>Claude APIで文章を変換中...</span>
+      </div>
+      <div class="step" id="step4">
+        <span class="step-icon">4</span>
+        <span>Google Sheetsに書き込み中...</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="error-msg" id="errorMsg"></div>
+
+  <div class="result" id="resultArea">
+    <div class="result-icon">✅</div>
+    <h3>変換完了！</h3>
+    <p id="resultMsg">Google Sheetsに新しいタブが作成されました</p>
+    <a id="sheetLink" href="#" target="_blank">📊 スプレッドシートを開く</a>
+  </div>
+</div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('file-input');
+const fileInfo = document.getElementById('fileInfo');
+const fileName = document.getElementById('fileName');
+const fileSize = document.getElementById('fileSize');
+const fileRemove = document.getElementById('fileRemove');
+const submitBtn = document.getElementById('submitBtn');
+const progressArea = document.getElementById('progressArea');
+const progressBar = document.getElementById('progressBar');
+const errorMsg = document.getElementById('errorMsg');
+const resultArea = document.getElementById('resultArea');
+
+let selectedFile = null;
+
+// --- Drag & Drop ---
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type === 'application/pdf') handleFile(file);
+});
+fileInput.addEventListener('change', e => {
+  if (e.target.files[0]) handleFile(e.target.files[0]);
+});
+fileRemove.addEventListener('click', () => {
+  selectedFile = null;
+  fileInfo.classList.remove('show');
+  submitBtn.disabled = true;
+  fileInput.value = '';
+});
+
+function handleFile(file) {
+  selectedFile = file;
+  fileName.textContent = file.name;
+  fileSize.textContent = (file.size / 1024).toFixed(1) + ' KB';
+  fileInfo.classList.add('show');
+  submitBtn.disabled = false;
+
+  // Auto-fill tab name from filename
+  const match = file.name.match(/(\d{2,4})\s*(\d{1,2})/);
+  if (match) {
+    const month = match[2];
+    document.getElementById('tabName').value = `${month}月お花情報`;
+  }
+}
+
+// --- Extract text from PDF ---
+async function extractPdfText(file) {
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  let fullText = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const pageText = content.items.map(item => item.str).join(' ');
+    fullText += `\n--- ページ ${i} ---\n${pageText}\n`;
+  }
+  return fullText;
+}
+
+// --- Progress helpers ---
+function setStep(n) {
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById(`step${i}`);
+    el.classList.remove('active', 'done');
+    if (i < n) el.classList.add('done');
+    if (i === n) el.classList.add('active');
+  }
+  progressBar.style.width = `${(n / 4) * 100}%`;
+}
+
+function showError(msg) {
+  errorMsg.textContent = msg;
+  errorMsg.classList.add('show');
+}
+
+function hideError() {
+  errorMsg.classList.remove('show');
+}
+
+// --- Submit ---
+submitBtn.addEventListener('click', async () => {
+  const gasUrl = document.getElementById('gasUrl').value.trim();
+  const tabName = document.getElementById('tabName').value.trim();
+
+  if (!gasUrl) { showError('GAS Web App URLを入力してください'); return; }
+  if (!selectedFile) { showError('PDFファイルを選択してください'); return; }
+
+  hideError();
+  resultArea.classList.remove('show');
+  progressArea.classList.add('show');
+  submitBtn.disabled = true;
+
+  try {
+    // Step 1: Extract PDF text
+    setStep(1);
+    const pdfText = await extractPdfText(selectedFile);
+
+    // Step 2: Send to GAS
+    setStep(2);
+    const response = await fetch(gasUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        text: pdfText,
+        tabName: tabName || '花情報',
+        fileName: selectedFile.name
+      })
+    });
+
+    // Step 3 & 4 happen on GAS side, we poll or wait for response
+    setStep(3);
+    const result = await response.json();
+
+    if (result.status === 'success') {
+      setStep(4);
+      progressBar.style.width = '100%';
+
+      setTimeout(() => {
+        progressArea.classList.remove('show');
+        resultArea.classList.add('show');
+        document.getElementById('resultMsg').textContent =
+          `「${result.tabName || tabName}」タブが作成されました`;
+        if (result.sheetUrl) {
+          document.getElementById('sheetLink').href = result.sheetUrl;
+          document.getElementById('sheetLink').style.display = 'inline-block';
+        }
+      }, 800);
+    } else {
+      throw new Error(result.message || '処理中にエラーが発生しました');
+    }
+
+  } catch (err) {
+    progressArea.classList.remove('show');
+    showError(`エラー: ${err.message}`);
+  } finally {
+    submitBtn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>
