@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>花市場レポート変換ツール</title>
+<title>hanagoyomi — 花暦</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -397,7 +397,7 @@
 <div class="container">
   <div class="header">
     <div class="header-icon">🌿</div>
-    <h1>花市場レポート変換ツール</h1>
+    <h1>hanagoyomi — 花暦</h1>
     <p>市場報告書 → お客様向け情報シートに自動変換</p>
   </div>
 
@@ -420,11 +420,7 @@
 
   <div class="card settings">
     <h2>⚙️ 設定</h2>
-    <div class="field">
-      <label>Google Apps Script Web App URL</label>
-      <input type="url" id="gasUrl" placeholder="https://script.google.com/macros/s/xxxxx/exec"
-             value="">
-    </div>
+
     <div class="field">
       <label>タブ名（自動入力）</label>
       <input type="text" id="tabName" placeholder="例：2月お花情報">
@@ -557,10 +553,8 @@ function hideError() {
 
 // --- Submit ---
 submitBtn.addEventListener('click', async () => {
-  const gasUrl = document.getElementById('gasUrl').value.trim();
+  const gasUrl = 'https://script.google.com/macros/s/AKfycbyfOqgFaHEnM67MaA1Z9OpF4NuBZ6Wfx4417A-3Bj_Gsmras13UBTB9fjJAseh_uVza/exec';
   const tabName = document.getElementById('tabName').value.trim();
-
-  if (!gasUrl) { showError('GAS Web App URLを入力してください'); return; }
   if (!selectedFile) { showError('PDFファイルを選択してください'); return; }
 
   hideError();
