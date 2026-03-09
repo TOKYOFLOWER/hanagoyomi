@@ -354,6 +354,24 @@
     background: var(--sage);
     color: white;
   }
+  .reset-btn {
+    display: inline-block;
+    padding: 12px 28px;
+    background: white;
+    color: var(--sage);
+    border: 1.5px solid var(--sage-light);
+    border-radius: 10px;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 12px;
+  }
+  .reset-btn:hover {
+    background: var(--sage-pale);
+    border-color: var(--sage);
+  }
 
   /* Error */
   .error-msg {
@@ -462,6 +480,8 @@
     <h3>変換完了！</h3>
     <p id="resultMsg">Google Sheetsに新しいタブが作成されました</p>
     <a id="sheetLink" href="#" target="_blank">📊 スプレッドシートを開く</a>
+    <br>
+    <button class="reset-btn" id="resetBtn">🔄 もう一枚処理する</button>
   </div>
 </div>
 
@@ -490,10 +510,19 @@ dropZone.addEventListener('drop', e => {
   e.preventDefault();
   dropZone.classList.remove('dragover');
   const file = e.dataTransfer.files[0];
-  if (file && file.type === 'application/pdf') handleFile(file);
+  if (!file) return;
+  if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+    showError('PDFファイルのみ対応しています。PDF形式のファイルを選択してください。');
+    return;
+  }
+  hideError();
+  handleFile(file);
 });
 fileInput.addEventListener('change', e => {
-  if (e.target.files[0]) handleFile(e.target.files[0]);
+  if (e.target.files[0]) {
+    hideError();
+    handleFile(e.target.files[0]);
+  }
 });
 fileRemove.addEventListener('click', () => {
   selectedFile = null;
@@ -510,10 +539,31 @@ function handleFile(file) {
   submitBtn.disabled = false;
 
   // Auto-fill tab name from filename
-  const match = file.name.match(/(\d{2,4})\s*(\d{1,2})/);
-  if (match) {
-    const month = match[2];
-    document.getElementById('tabName').value = `${month}月お花情報`;
+  const tabInput = document.getElementById('tabName');
+  const name = file.name;
+  let month = null;
+
+  // パターン1: 「○月」表記（例：2月, 12月）
+  let m = name.match(/(\d{1,2})\s*月/);
+  if (m && parseInt(m[1]) >= 1 && parseInt(m[1]) <= 12) {
+    month = parseInt(m[1]);
+  }
+  // パターン2: 年月（例：202502, 2025-02, 2025_02）
+  if (!month) {
+    m = name.match(/20\d{2}[\-_\/]?(\d{2})/);
+    if (m && parseInt(m[1]) >= 1 && parseInt(m[1]) <= 12) {
+      month = parseInt(m[1]);
+    }
+  }
+  // パターン3: 年+月を別々に検出（例：2025 2）
+  if (!month) {
+    m = name.match(/20\d{2}\s+(\d{1,2})/);
+    if (m && parseInt(m[1]) >= 1 && parseInt(m[1]) <= 12) {
+      month = parseInt(m[1]);
+    }
+  }
+  if (month) {
+    tabInput.value = `${month}月お花情報`;
   }
 }
 
@@ -542,7 +592,16 @@ function setStep(n) {
   progressBar.style.width = `${(n / 4) * 100}%`;
 }
 
+function resetProgress() {
+  for (let i = 1; i <= 4; i++) {
+    document.getElementById(`step${i}`).classList.remove('active', 'done');
+  }
+  progressBar.style.width = '0%';
+  progressArea.classList.remove('show');
+}
+
 function showError(msg) {
+  resetProgress();
   errorMsg.textContent = msg;
   errorMsg.classList.add('show');
 }
@@ -579,11 +638,12 @@ submitBtn.addEventListener('click', async () => {
       })
     });
 
-    // Step 3 & 4 happen on GAS side, we poll or wait for response
+    // Step 3: GAS側でClaude APIが処理中（fetchレスポンスヘッダ受信後）
     setStep(3);
     const result = await response.json();
 
     if (result.status === 'success') {
+      // Step 4: レスポンス受信完了 → 書き込み完了
       setStep(4);
       progressBar.style.width = '100%';
 
@@ -602,11 +662,22 @@ submitBtn.addEventListener('click', async () => {
     }
 
   } catch (err) {
-    progressArea.classList.remove('show');
     showError(`エラー: ${err.message}`);
   } finally {
     submitBtn.disabled = false;
   }
+});
+
+// --- Reset (もう一枚処理する) ---
+document.getElementById('resetBtn').addEventListener('click', () => {
+  selectedFile = null;
+  fileInput.value = '';
+  fileInfo.classList.remove('show');
+  resultArea.classList.remove('show');
+  submitBtn.disabled = true;
+  document.getElementById('tabName').value = '';
+  hideError();
+  resetProgress();
 });
 </script>
 </body>
