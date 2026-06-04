@@ -298,6 +298,40 @@
   }
   .step.active { color: var(--sage); font-weight: 500; }
   .step.done { color: var(--sage-light); }
+  .step-body {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .step-label { font-size: 13px; }
+  .step-sub {
+    font-size: 11px;
+    color: var(--sage-light);
+    font-weight: 400;
+  }
+
+  /* ドットアニメーション */
+  .dots::after {
+    content: '';
+    animation: dotdot 1.4s infinite;
+  }
+  @keyframes dotdot {
+    0%   { content: ''; }
+    25%  { content: '.'; }
+    50%  { content: '..'; }
+    75%  { content: '...'; }
+    100% { content: ''; }
+  }
+
+  /* タイマー */
+  .timer-area {
+    display: none;
+    text-align: center;
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--sage-light);
+  }
+  .timer-area.show { display: block; }
   .step-icon {
     width: 22px;
     height: 22px;
@@ -457,20 +491,32 @@
     <div class="progress-steps">
       <div class="step" id="step1">
         <span class="step-icon">1</span>
-        <span>PDFからテキストを抽出中...</span>
+        <div class="step-body">
+          <span class="step-label">PDFからテキストを抽出中...</span>
+        </div>
       </div>
       <div class="step" id="step2">
         <span class="step-icon">2</span>
-        <span>GASに送信中...</span>
+        <div class="step-body">
+          <span class="step-label">GASにデータを送信中...</span>
+        </div>
       </div>
       <div class="step" id="step3">
         <span class="step-icon">3</span>
-        <span>Claude APIで文章を変換中...</span>
+        <div class="step-body">
+          <span class="step-label">Claude AIが文章を生成中<span class="dots"></span></span>
+          <span class="step-sub" id="step3sub"></span>
+        </div>
       </div>
       <div class="step" id="step4">
         <span class="step-icon">4</span>
-        <span>Google Sheetsに書き込み中...</span>
+        <div class="step-body">
+          <span class="step-label">Google Sheetsに書き込み中...</span>
+        </div>
       </div>
+    </div>
+    <div class="timer-area" id="timerArea">
+      <span id="timerText"></span>
     </div>
   </div>
 
@@ -587,6 +633,52 @@ async function extractPdfText(file) {
 }
 
 // --- Progress helpers ---
+let timerInterval = null;
+let progressInterval = null;
+let elapsedSeconds = 0;
+
+function startTimer() {
+  elapsedSeconds = 0;
+  const timerArea = document.getElementById('timerArea');
+  const timerText = document.getElementById('timerText');
+  timerArea.classList.add('show');
+  timerInterval = setInterval(() => {
+    elapsedSeconds++;
+    const m = Math.floor(elapsedSeconds / 60);
+    const s = elapsedSeconds % 60;
+    const timeStr = m > 0 ? `${m}分${s}秒` : `${s}秒`;
+    timerText.textContent = `⏱ 処理中... ${timeStr} 経過`;
+    // サブテキストを更新
+    const sub = document.getElementById('step3sub');
+    if (sub) {
+      if (elapsedSeconds < 30) sub.textContent = '通常1〜2分かかります。そのままお待ちください。';
+      else if (elapsedSeconds < 60) sub.textContent = 'もうしばらくお待ちください...';
+      else if (elapsedSeconds < 90) sub.textContent = 'AIが丁寧に文章を生成しています...';
+      else sub.textContent = 'もうすぐ完了します。このままお待ちください。';
+    }
+  }, 1000);
+}
+
+function startProgressCreep(fromPct, toPct, durationMs) {
+  // プログレスバーをゆっくり自動前進させる
+  if (progressInterval) clearInterval(progressInterval);
+  const steps = 100;
+  const interval = durationMs / steps;
+  let current = fromPct;
+  const increment = (toPct - fromPct) / steps;
+  progressInterval = setInterval(() => {
+    current += increment;
+    if (current >= toPct) { current = toPct; clearInterval(progressInterval); }
+    progressBar.style.width = `${current}%`;
+  }, interval);
+}
+
+function stopTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  if (progressInterval) { clearInterval(progressInterval); progressInterval = null; }
+  document.getElementById('timerArea').classList.remove('show');
+}
+
 function setStep(n) {
   for (let i = 1; i <= 4; i++) {
     const el = document.getElementById(`step${i}`);
@@ -594,10 +686,22 @@ function setStep(n) {
     if (i < n) el.classList.add('done');
     if (i === n) el.classList.add('active');
   }
-  progressBar.style.width = `${(n / 4) * 100}%`;
+  // ステップ3に入ったらタイマーとクリープ開始
+  if (n === 3) {
+    progressBar.style.width = '50%';
+    startTimer();
+    startProgressCreep(50, 88, 90000); // 90秒かけて88%まで
+  } else if (n !== 3) {
+    stopTimer();
+    if (n < 3) progressBar.style.width = `${(n / 4) * 100}%`;
+  }
+  if (n === 4) {
+    progressBar.style.width = '100%';
+  }
 }
 
 function resetProgress() {
+  stopTimer();
   for (let i = 1; i <= 4; i++) {
     document.getElementById(`step${i}`).classList.remove('active', 'done');
   }
