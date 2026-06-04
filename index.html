@@ -595,16 +595,16 @@ function handleFile(file) {
   if (m && parseInt(m[1]) >= 1 && parseInt(m[1]) <= 12) {
     month = parseInt(m[1]);
   }
-  // パターン2: 年月（例：202502, 2025-02, 2025_02）
+  // パターン2: 年月6桁（例：202506）→ 末尾2桁が月
   if (!month) {
-    m = name.match(/20\d{2}[\-_\/]?(\d{2})/);
+    m = name.match(/20\d{2}(\d{2})(?!\d)/);
     if (m && parseInt(m[1]) >= 1 && parseInt(m[1]) <= 12) {
       month = parseInt(m[1]);
     }
   }
-  // パターン3: 年+月を別々に検出（例：2025 2）
+  // パターン3: 区切りあり（例：2025-06, 2025_06）
   if (!month) {
-    m = name.match(/20\d{2}\s+(\d{1,2})/);
+    m = name.match(/20\d{2}[\-_\/](\d{1,2})/);
     if (m && parseInt(m[1]) >= 1 && parseInt(m[1]) <= 12) {
       month = parseInt(m[1]);
     }
@@ -686,17 +686,19 @@ function setStep(n) {
     if (i < n) el.classList.add('done');
     if (i === n) el.classList.add('active');
   }
-  // ステップ3に入ったらタイマーとクリープ開始
+  if (n === 2) {
+    progressBar.style.width = '25%';
+    document.getElementById('timerArea').classList.add('show');
+  }
   if (n === 3) {
-    progressBar.style.width = '50%';
-    startTimer();
-    startProgressCreep(50, 88, 90000); // 90秒かけて88%まで
-  } else if (n !== 3) {
     stopTimer();
-    if (n < 3) progressBar.style.width = `${(n / 4) * 100}%`;
+    progressBar.style.width = '90%';
   }
   if (n === 4) {
     progressBar.style.width = '100%';
+  }
+  if (n === 1) {
+    progressBar.style.width = '10%';
   }
 }
 
@@ -735,8 +737,10 @@ submitBtn.addEventListener('click', async () => {
     setStep(1);
     const pdfText = await extractPdfText(selectedFile);
 
-    // Step 2: Send to GAS
+    // Step 2: Send to GAS（ここが最も時間がかかる）
     setStep(2);
+    startTimer();
+    startProgressCreep(25, 88, 120000); // 2分かけて88%まで
     const response = await fetch(gasUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -747,8 +751,9 @@ submitBtn.addEventListener('click', async () => {
       })
     });
 
-    // Step 3: GAS側でClaude APIが処理中（fetchレスポンスヘッダ受信後）
+    // Step 3: レスポンス受信・JSON解析
     setStep(3);
+    stopTimer();
     const result = await response.json();
 
     if (result.status === 'success') {
