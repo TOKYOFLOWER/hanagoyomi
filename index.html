@@ -32,7 +32,6 @@
     overflow-x: hidden;
   }
 
-  /* Decorative background */
   body::before {
     content: '';
     position: fixed;
@@ -66,17 +65,12 @@
     padding: 40px 24px 60px;
   }
 
-  /* Header */
   .header {
     text-align: center;
     margin-bottom: 48px;
     animation: fadeDown 0.8s ease-out;
   }
-  .header-icon {
-    font-size: 42px;
-    margin-bottom: 12px;
-    filter: drop-shadow(0 2px 4px var(--shadow));
-  }
+  .header-icon { font-size: 42px; margin-bottom: 12px; filter: drop-shadow(0 2px 4px var(--shadow)); }
   .header h1 {
     font-family: 'Zen Maru Gothic', sans-serif;
     font-size: 26px;
@@ -85,14 +79,8 @@
     letter-spacing: 0.02em;
     margin-bottom: 8px;
   }
-  .header p {
-    font-size: 13px;
-    color: var(--sage-light);
-    font-weight: 300;
-    letter-spacing: 0.04em;
-  }
+  .header p { font-size: 13px; color: var(--sage-light); font-weight: 300; letter-spacing: 0.04em; }
 
-  /* Card */
   .card {
     background: white;
     border-radius: 20px;
@@ -102,7 +90,6 @@
     animation: fadeUp 0.8s ease-out 0.15s both;
   }
 
-  /* Drop Zone */
   .drop-zone {
     border: 2px dashed var(--sage-light);
     border-radius: 16px;
@@ -118,13 +105,7 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: repeating-linear-gradient(
-      45deg,
-      transparent,
-      transparent 20px,
-      rgba(91,123,94,0.02) 20px,
-      rgba(91,123,94,0.02) 40px
-    );
+    background: repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(91,123,94,0.02) 20px, rgba(91,123,94,0.02) 40px);
     pointer-events: none;
   }
   .drop-zone:hover, .drop-zone.dragover {
@@ -133,30 +114,13 @@
     transform: scale(1.01);
     box-shadow: 0 8px 32px rgba(91,123,94,0.15);
   }
-  .drop-zone-icon {
-    font-size: 48px;
-    margin-bottom: 16px;
-    display: block;
-    transition: transform 0.3s ease;
-  }
-  .drop-zone:hover .drop-zone-icon {
-    transform: translateY(-4px);
-  }
-  .drop-zone h3 {
-    font-family: 'Zen Maru Gothic', sans-serif;
-    font-size: 16px;
-    font-weight: 500;
-    color: var(--sage);
-    margin-bottom: 6px;
-  }
-  .drop-zone p {
-    font-size: 12px;
-    color: #999;
-  }
+  .drop-zone-icon { font-size: 48px; margin-bottom: 16px; display: block; transition: transform 0.3s ease; }
+  .drop-zone:hover .drop-zone-icon { transform: translateY(-4px); }
+  .drop-zone h3 { font-family: 'Zen Maru Gothic', sans-serif; font-size: 16px; font-weight: 500; color: var(--sage); margin-bottom: 6px; }
+  .drop-zone p { font-size: 12px; color: #999; }
 
   #file-input { display: none; }
 
-  /* File info */
   .file-info {
     display: none;
     align-items: center;
@@ -170,69 +134,18 @@
   .file-info.show { display: flex; }
   .file-info-icon { font-size: 28px; }
   .file-info-text { flex: 1; }
-  .file-info-name {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--bark);
-  }
-  .file-info-size {
-    font-size: 11px;
-    color: var(--sage-light);
-  }
-  .file-info-remove {
-    background: none;
-    border: none;
-    font-size: 18px;
-    cursor: pointer;
-    color: #aaa;
-    transition: color 0.2s;
-    padding: 4px;
-  }
+  .file-info-name { font-size: 13px; font-weight: 500; color: var(--bark); }
+  .file-info-size { font-size: 11px; color: var(--sage-light); }
+  .file-info-remove { background: none; border: none; font-size: 18px; cursor: pointer; color: #aaa; transition: color 0.2s; padding: 4px; }
   .file-info-remove:hover { color: var(--bark); }
 
-  /* Settings */
-  .settings {
-    animation: fadeUp 0.8s ease-out 0.3s both;
-  }
-  .settings h2 {
-    font-family: 'Zen Maru Gothic', sans-serif;
-    font-size: 15px;
-    font-weight: 500;
-    color: var(--sage);
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .field {
-    margin-bottom: 16px;
-  }
-  .field label {
-    display: block;
-    font-size: 12px;
-    font-weight: 500;
-    color: #777;
-    margin-bottom: 6px;
-    letter-spacing: 0.03em;
-  }
-  .field input, .field select {
-    width: 100%;
-    padding: 10px 14px;
-    border: 1.5px solid #e0e0e0;
-    border-radius: 10px;
-    font-size: 14px;
-    font-family: 'Noto Sans JP', sans-serif;
-    color: var(--bark);
-    background: white;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    outline: none;
-  }
-  .field input:focus, .field select:focus {
-    border-color: var(--sage);
-    box-shadow: 0 0 0 3px rgba(91,123,94,0.1);
-  }
+  .settings { animation: fadeUp 0.8s ease-out 0.3s both; }
+  .settings h2 { font-family: 'Zen Maru Gothic', sans-serif; font-size: 15px; font-weight: 500; color: var(--sage); margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 12px; font-weight: 500; color: #777; margin-bottom: 6px; letter-spacing: 0.03em; }
+  .field input, .field select { width: 100%; padding: 10px 14px; border: 1.5px solid #e0e0e0; border-radius: 10px; font-size: 14px; font-family: 'Noto Sans JP', sans-serif; color: var(--bark); background: white; transition: border-color 0.2s, box-shadow 0.2s; outline: none; }
+  .field input:focus, .field select:focus { border-color: var(--sage); box-shadow: 0 0 0 3px rgba(91,123,94,0.1); }
 
-  /* Button */
   .submit-btn {
     width: 100%;
     padding: 15px;
@@ -250,71 +163,23 @@
     margin-top: 8px;
     animation: fadeUp 0.8s ease-out 0.45s both;
   }
-  .submit-btn:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 28px rgba(91,123,94,0.4);
-  }
-  .submit-btn:active:not(:disabled) {
-    transform: translateY(0);
-  }
-  .submit-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+  .submit-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(91,123,94,0.4); }
+  .submit-btn:active:not(:disabled) { transform: translateY(0); }
+  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  /* Progress */
-  .progress-area {
-    display: none;
-    margin-top: 24px;
-    animation: fadeUp 0.4s ease-out;
-  }
+  .progress-area { display: none; margin-top: 24px; animation: fadeUp 0.4s ease-out; }
   .progress-area.show { display: block; }
-  .progress-bar-track {
-    height: 6px;
-    background: var(--sage-pale);
-    border-radius: 3px;
-    overflow: hidden;
-    margin-bottom: 12px;
-  }
-  .progress-bar-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--sage), var(--petal));
-    border-radius: 3px;
-    width: 0%;
-    transition: width 0.6s ease;
-  }
-  .progress-steps {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .step {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 13px;
-    color: #bbb;
-    transition: color 0.3s;
-  }
+  .progress-bar-track { height: 6px; background: var(--sage-pale); border-radius: 3px; overflow: hidden; margin-bottom: 12px; }
+  .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--sage), var(--petal)); border-radius: 3px; width: 0%; transition: width 0.6s ease; }
+  .progress-steps { display: flex; flex-direction: column; gap: 8px; }
+  .step { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #bbb; transition: color 0.3s; }
   .step.active { color: var(--sage); font-weight: 500; }
   .step.done { color: var(--sage-light); }
-  .step-body {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-  }
+  .step-body { display: flex; flex-direction: column; gap: 3px; }
   .step-label { font-size: 13px; }
-  .step-sub {
-    font-size: 11px;
-    color: var(--sage-light);
-    font-weight: 400;
-  }
+  .step-sub { font-size: 11px; color: var(--sage-light); font-weight: 400; }
 
-  /* ドットアニメーション */
-  .dots::after {
-    content: '';
-    animation: dotdot 1.4s infinite;
-  }
+  .dots::after { content: ''; animation: dotdot 1.4s infinite; }
   @keyframes dotdot {
     0%   { content: ''; }
     25%  { content: '.'; }
@@ -323,57 +188,19 @@
     100% { content: ''; }
   }
 
-  /* タイマー */
-  .timer-area {
-    display: none;
-    text-align: center;
-    margin-top: 14px;
-    font-size: 12px;
-    color: var(--sage-light);
-  }
+  .timer-area { display: none; text-align: center; margin-top: 14px; font-size: 12px; color: var(--sage-light); }
   .timer-area.show { display: block; }
-  .step-icon {
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    background: #eee;
-    transition: all 0.3s;
-    flex-shrink: 0;
-  }
-  .step.active .step-icon {
-    background: var(--sage);
-    color: white;
-    animation: pulse 1.5s infinite;
-  }
-  .step.done .step-icon {
-    background: var(--sage-light);
-    color: white;
-  }
+  .step-icon { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; background: #eee; transition: all 0.3s; flex-shrink: 0; }
+  .step.active .step-icon { background: var(--sage); color: white; animation: pulse 1.5s infinite; }
+  .step.done .step-icon { background: var(--sage-light); color: white; }
 
-  /* Result */
-  .result {
-    display: none;
-    text-align: center;
-    padding: 32px;
-    animation: fadeUp 0.6s ease-out;
-  }
+  /* ===== 変更①: result に WordPress リンク用スタイル追加 ===== */
+  .result { display: none; text-align: center; padding: 32px; animation: fadeUp 0.6s ease-out; }
   .result.show { display: block; }
   .result-icon { font-size: 48px; margin-bottom: 12px; }
-  .result h3 {
-    font-family: 'Zen Maru Gothic', sans-serif;
-    font-size: 18px;
-    color: var(--sage);
-    margin-bottom: 6px;
-  }
-  .result p {
-    font-size: 13px;
-    color: #999;
-    margin-bottom: 20px;
-  }
+  .result h3 { font-family: 'Zen Maru Gothic', sans-serif; font-size: 18px; color: var(--sage); margin-bottom: 6px; }
+  .result p { font-size: 13px; color: #999; margin-bottom: 20px; }
+  .result-links { display: flex; flex-direction: column; gap: 10px; align-items: center; margin-bottom: 12px; }
   .result a {
     display: inline-block;
     padding: 12px 28px;
@@ -384,11 +211,15 @@
     font-weight: 500;
     font-size: 14px;
     transition: all 0.2s;
+    min-width: 240px;
   }
-  .result a:hover {
-    background: var(--sage);
-    color: white;
+  .result a:hover { background: var(--sage); color: white; }
+  .result a.wp-link {
+    background: #f0f4ff;
+    color: #3a5bd9;
+    border: 1px solid #c5d0f5;
   }
+  .result a.wp-link:hover { background: #3a5bd9; color: white; }
   .reset-btn {
     display: inline-block;
     padding: 12px 28px;
@@ -403,40 +234,15 @@
     transition: all 0.2s;
     margin-top: 12px;
   }
-  .reset-btn:hover {
-    background: var(--sage-pale);
-    border-color: var(--sage);
-  }
+  .reset-btn:hover { background: var(--sage-pale); border-color: var(--sage); }
 
-  /* Error */
-  .error-msg {
-    display: none;
-    padding: 14px 18px;
-    background: #FFF0F0;
-    border: 1px solid #FFCCCC;
-    border-radius: 12px;
-    color: #C0392B;
-    font-size: 13px;
-    margin-top: 16px;
-    animation: fadeUp 0.4s ease-out;
-  }
+  .error-msg { display: none; padding: 14px 18px; background: #FFF0F0; border: 1px solid #FFCCCC; border-radius: 12px; color: #C0392B; font-size: 13px; margin-top: 16px; animation: fadeUp 0.4s ease-out; }
   .error-msg.show { display: block; }
 
-  /* Animations */
-  @keyframes fadeDown {
-    from { opacity: 0; transform: translateY(-16px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(16px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(91,123,94,0.3); }
-    50% { box-shadow: 0 0 0 6px rgba(91,123,94,0); }
-  }
+  @keyframes fadeDown { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(91,123,94,0.3); } 50% { box-shadow: 0 0 0 6px rgba(91,123,94,0); } }
 
-  /* Responsive */
   @media (max-width: 480px) {
     .container { padding: 24px 16px 40px; }
     .card { padding: 24px 20px; }
@@ -473,15 +279,15 @@
 
   <div class="card settings">
     <h2>⚙️ 設定</h2>
-
     <div class="field">
       <label>タブ名（自動入力）</label>
       <input type="text" id="tabName" placeholder="例：2月お花情報">
     </div>
   </div>
 
+  <!-- ===== 変更②: ボタンのラベルを WordPress 投稿も含む表現に ===== -->
   <button class="submit-btn" id="submitBtn" disabled>
-    🌸 変換してシートに書き込む
+    🌸 変換してシートに書き込む／WordPress に投稿する
   </button>
 
   <div class="progress-area" id="progressArea">
@@ -491,15 +297,11 @@
     <div class="progress-steps">
       <div class="step" id="step1">
         <span class="step-icon">1</span>
-        <div class="step-body">
-          <span class="step-label">PDFからテキストを抽出中...</span>
-        </div>
+        <div class="step-body"><span class="step-label">PDFからテキストを抽出中...</span></div>
       </div>
       <div class="step" id="step2">
         <span class="step-icon">2</span>
-        <div class="step-body">
-          <span class="step-label">GASにデータを送信中...</span>
-        </div>
+        <div class="step-body"><span class="step-label">GASにデータを送信中...</span></div>
       </div>
       <div class="step" id="step3">
         <span class="step-icon">3</span>
@@ -510,9 +312,7 @@
       </div>
       <div class="step" id="step4">
         <span class="step-icon">4</span>
-        <div class="step-body">
-          <span class="step-label">Google Sheetsに書き込み中...</span>
-        </div>
+        <div class="step-body"><span class="step-label">Google Sheets書き込み ＆ WordPress投稿中...</span></div>
       </div>
     </div>
     <div class="timer-area" id="timerArea">
@@ -522,12 +322,15 @@
 
   <div class="error-msg" id="errorMsg"></div>
 
+  <!-- ===== 変更③: 完了画面に WordPress リンクを追加 ===== -->
   <div class="result" id="resultArea">
     <div class="result-icon">✅</div>
-    <h3>変換完了！</h3>
+    <h3>変換・投稿完了！</h3>
     <p id="resultMsg">Google Sheetsに新しいタブが作成されました</p>
-    <a id="sheetLink" href="#" target="_blank">📊 スプレッドシートを開く</a>
-    <br>
+    <div class="result-links">
+      <a id="sheetLink" href="#" target="_blank" style="display:none;">📊 スプレッドシートを開く</a>
+      <a id="wpLink" href="#" target="_blank" class="wp-link" style="display:none;">🌸 WordPress の記事を確認する</a>
+    </div>
     <button class="reset-btn" id="resetBtn">🔄 もう一枚処理する</button>
   </div>
 </div>
@@ -535,16 +338,16 @@
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-const dropZone = document.getElementById('dropZone');
-const fileInput = document.getElementById('file-input');
-const fileInfo = document.getElementById('fileInfo');
-const fileName = document.getElementById('fileName');
-const fileSize = document.getElementById('fileSize');
+const dropZone   = document.getElementById('dropZone');
+const fileInput  = document.getElementById('file-input');
+const fileInfo   = document.getElementById('fileInfo');
+const fileName   = document.getElementById('fileName');
+const fileSize   = document.getElementById('fileSize');
 const fileRemove = document.getElementById('fileRemove');
-const submitBtn = document.getElementById('submitBtn');
+const submitBtn  = document.getElementById('submitBtn');
 const progressArea = document.getElementById('progressArea');
-const progressBar = document.getElementById('progressBar');
-const errorMsg = document.getElementById('errorMsg');
+const progressBar  = document.getElementById('progressBar');
+const errorMsg   = document.getElementById('errorMsg');
 const resultArea = document.getElementById('resultArea');
 
 let selectedFile = null;
@@ -566,10 +369,7 @@ dropZone.addEventListener('drop', e => {
   handleFile(file);
 });
 fileInput.addEventListener('change', e => {
-  if (e.target.files[0]) {
-    hideError();
-    handleFile(e.target.files[0]);
-  }
+  if (e.target.files[0]) { hideError(); handleFile(e.target.files[0]); }
 });
 fileRemove.addEventListener('click', () => {
   selectedFile = null;
@@ -585,36 +385,16 @@ function handleFile(file) {
   fileInfo.classList.add('show');
   submitBtn.disabled = false;
 
-  // Auto-fill tab name from filename
   const tabInput = document.getElementById('tabName');
   const name = file.name;
   let month = null;
-
-  // パターン1: 「○月」表記（例：2月, 12月）
   let m = name.match(/(\d{1,2})\s*月/);
-  if (m && parseInt(m[1]) >= 1 && parseInt(m[1]) <= 12) {
-    month = parseInt(m[1]);
-  }
-  // パターン2: 年月6桁（例：202506）→ 末尾2桁が月
-  if (!month) {
-    m = name.match(/20\d{2}(\d{2})(?!\d)/);
-    if (m && parseInt(m[1]) >= 1 && parseInt(m[1]) <= 12) {
-      month = parseInt(m[1]);
-    }
-  }
-  // パターン3: 区切りあり（例：2025-06, 2025_06）
-  if (!month) {
-    m = name.match(/20\d{2}[\-_\/](\d{1,2})/);
-    if (m && parseInt(m[1]) >= 1 && parseInt(m[1]) <= 12) {
-      month = parseInt(m[1]);
-    }
-  }
-  if (month) {
-    tabInput.value = `${month}月お花情報`;
-  }
+  if (m && parseInt(m[1]) >= 1 && parseInt(m[1]) <= 12) month = parseInt(m[1]);
+  if (!month) { m = name.match(/20\d{2}(\d{2})(?!\d)/); if (m && parseInt(m[1]) >= 1 && parseInt(m[1]) <= 12) month = parseInt(m[1]); }
+  if (!month) { m = name.match(/20\d{2}[\-_\/](\d{1,2})/); if (m && parseInt(m[1]) >= 1 && parseInt(m[1]) <= 12) month = parseInt(m[1]); }
+  if (month) tabInput.value = `${month}月お花情報`;
 }
 
-// --- Extract text from PDF ---
 async function extractPdfText(file) {
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({
@@ -626,13 +406,11 @@ async function extractPdfText(file) {
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
-    const pageText = content.items.map(item => item.str).join(' ');
-    fullText += `\n--- ページ ${i} ---\n${pageText}\n`;
+    fullText += `\n--- ページ ${i} ---\n${content.items.map(item => item.str).join(' ')}\n`;
   }
   return fullText;
 }
 
-// --- Progress helpers ---
 let timerInterval = null;
 let progressInterval = null;
 let elapsedSeconds = 0;
@@ -646,21 +424,18 @@ function startTimer() {
     elapsedSeconds++;
     const m = Math.floor(elapsedSeconds / 60);
     const s = elapsedSeconds % 60;
-    const timeStr = m > 0 ? `${m}分${s}秒` : `${s}秒`;
-    timerText.textContent = `⏱ 処理中... ${timeStr} 経過`;
-    // サブテキストを更新
+    timerText.textContent = `⏱ 処理中... ${m > 0 ? m+'分' : ''}${s}秒 経過`;
     const sub = document.getElementById('step3sub');
     if (sub) {
-      if (elapsedSeconds < 30) sub.textContent = '通常1〜2分かかります。そのままお待ちください。';
+      if      (elapsedSeconds < 30) sub.textContent = '通常1〜2分かかります。そのままお待ちください。';
       else if (elapsedSeconds < 60) sub.textContent = 'もうしばらくお待ちください...';
       else if (elapsedSeconds < 90) sub.textContent = 'AIが丁寧に文章を生成しています...';
-      else sub.textContent = 'もうすぐ完了します。このままお待ちください。';
+      else                           sub.textContent = 'もうすぐ完了します。このままお待ちください。';
     }
   }, 1000);
 }
 
 function startProgressCreep(fromPct, toPct, durationMs) {
-  // プログレスバーをゆっくり自動前進させる
   if (progressInterval) clearInterval(progressInterval);
   const steps = 100;
   const interval = durationMs / steps;
@@ -674,7 +449,7 @@ function startProgressCreep(fromPct, toPct, durationMs) {
 }
 
 function stopTimer() {
-  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  if (timerInterval)    { clearInterval(timerInterval);    timerInterval    = null; }
   if (progressInterval) { clearInterval(progressInterval); progressInterval = null; }
   document.getElementById('timerArea').classList.remove('show');
 }
@@ -686,44 +461,25 @@ function setStep(n) {
     if (i < n) el.classList.add('done');
     if (i === n) el.classList.add('active');
   }
-  if (n === 2) {
-    progressBar.style.width = '25%';
-    document.getElementById('timerArea').classList.add('show');
-  }
-  if (n === 3) {
-    stopTimer();
-    progressBar.style.width = '90%';
-  }
-  if (n === 4) {
-    progressBar.style.width = '100%';
-  }
-  if (n === 1) {
-    progressBar.style.width = '10%';
-  }
+  if (n === 1) progressBar.style.width = '10%';
+  if (n === 2) { progressBar.style.width = '25%'; document.getElementById('timerArea').classList.add('show'); }
+  if (n === 3) { stopTimer(); progressBar.style.width = '90%'; }
+  if (n === 4) progressBar.style.width = '100%';
 }
 
 function resetProgress() {
   stopTimer();
-  for (let i = 1; i <= 4; i++) {
-    document.getElementById(`step${i}`).classList.remove('active', 'done');
-  }
+  for (let i = 1; i <= 4; i++) document.getElementById(`step${i}`).classList.remove('active', 'done');
   progressBar.style.width = '0%';
   progressArea.classList.remove('show');
 }
 
-function showError(msg) {
-  resetProgress();
-  errorMsg.textContent = msg;
-  errorMsg.classList.add('show');
-}
-
-function hideError() {
-  errorMsg.classList.remove('show');
-}
+function showError(msg) { resetProgress(); errorMsg.textContent = msg; errorMsg.classList.add('show'); }
+function hideError()    { errorMsg.classList.remove('show'); }
 
 // --- Submit ---
 submitBtn.addEventListener('click', async () => {
-  const gasUrl = 'https://script.google.com/macros/s/AKfycbyfOqgFaHEnM67MaA1Z9OpF4NuBZ6Wfx4417A-3Bj_Gsmras13UBTB9fjJAseh_uVza/exec';
+  const gasUrl  = 'https://script.google.com/macros/s/AKfycbyfOqgFaHEnM67MaA1Z9OpF4NuBZ6Wfx4417A-3Bj_Gsmras13UBTB9fjJAseh_uVza/exec';
   const tabName = document.getElementById('tabName').value.trim();
   if (!selectedFile) { showError('PDFファイルを選択してください'); return; }
 
@@ -733,43 +489,50 @@ submitBtn.addEventListener('click', async () => {
   submitBtn.disabled = true;
 
   try {
-    // Step 1: Extract PDF text
     setStep(1);
     const pdfText = await extractPdfText(selectedFile);
 
-    // Step 2: Send to GAS（ここが最も時間がかかる）
     setStep(2);
     startTimer();
-    startProgressCreep(25, 88, 120000); // 2分かけて88%まで
+    startProgressCreep(25, 88, 120000);
+
     const response = await fetch(gasUrl, {
-      method: 'POST',
+      method : 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({
-        text: pdfText,
-        tabName: tabName || '花情報',
-        fileName: selectedFile.name
+      body   : JSON.stringify({
+        text    : pdfText,
+        tabName : tabName || '花情報',
+        fileName: selectedFile.name,
+        postToWP: true
       })
     });
 
-    // Step 3: レスポンス受信・JSON解析
     setStep(3);
     stopTimer();
     const result = await response.json();
 
     if (result.status === 'success') {
-      // Step 4: レスポンス受信完了 → 書き込み完了
       setStep(4);
       progressBar.style.width = '100%';
 
       setTimeout(() => {
         progressArea.classList.remove('show');
         resultArea.classList.add('show');
-        document.getElementById('resultMsg').textContent =
-          `「${result.tabName || tabName}」タブが作成されました`;
-        if (result.sheetUrl) {
-          document.getElementById('sheetLink').href = result.sheetUrl;
-          document.getElementById('sheetLink').style.display = 'inline-block';
-        }
+
+        // 完了メッセージ
+        const msgs = [];
+        if (result.tabName) msgs.push(`「${result.tabName}」タブを作成しました`);
+        if (result.wpUrl)   msgs.push('WordPress に記事を公開しました');
+        document.getElementById('resultMsg').textContent = msgs.join(' ／ ');
+
+        // スプレッドシートリンク
+        const sl = document.getElementById('sheetLink');
+        if (result.sheetUrl) { sl.href = result.sheetUrl; sl.style.display = 'inline-block'; }
+
+        // WordPress リンク
+        const wl = document.getElementById('wpLink');
+        if (result.wpUrl) { wl.href = result.wpUrl; wl.style.display = 'inline-block'; }
+
       }, 800);
     } else {
       throw new Error(result.message || '処理中にエラーが発生しました');
@@ -782,7 +545,7 @@ submitBtn.addEventListener('click', async () => {
   }
 });
 
-// --- Reset (もう一枚処理する) ---
+// --- Reset ---
 document.getElementById('resetBtn').addEventListener('click', () => {
   selectedFile = null;
   fileInput.value = '';
@@ -790,6 +553,8 @@ document.getElementById('resetBtn').addEventListener('click', () => {
   resultArea.classList.remove('show');
   submitBtn.disabled = true;
   document.getElementById('tabName').value = '';
+  document.getElementById('sheetLink').style.display = 'none';
+  document.getElementById('wpLink').style.display    = 'none';
   hideError();
   resetProgress();
 });
