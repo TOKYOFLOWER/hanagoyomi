@@ -26,16 +26,24 @@ function getConfig() {
 function doPost(e) {
   Logger.log('doPost開始: ' + JSON.stringify(Object.keys(e.parameter || {})));
   try {
-    var data     = JSON.parse(e.postData.contents);
-    var text     = data.text;
-    var tabName  = data.tabName;
-    var fileName = data.fileName;
-    var postToWP = data.postToWP !== false; // デフォルトtrue
+    var data      = JSON.parse(e.postData.contents);
+    var text      = data.text;
+    var pdfBase64 = data.pdfBase64;
+    var tabName   = data.tabName;
+    var fileName  = data.fileName;
+    var postToWP  = data.postToWP !== false; // デフォルトtrue
 
-    if (!text) return jsonResponse({ status: 'error', message: 'テキストが空です' });
+    Logger.log('受信: text長=' + (text ? text.length : 0) +
+               ', pdfBase64長=' + (pdfBase64 ? pdfBase64.length : 0));
 
-    // 1. Claude API で変換
-    var transformed = callClaudeAPI(text);
+    // ガード: text も pdfBase64 も無い（空）場合はClaude APIを呼ばずにエラーを返す
+    // （空データでAPIを呼ぶと無駄な課金・誤生成が起きるため）
+    if (!text && !pdfBase64) {
+      return jsonResponse({ status: 'error', message: 'PDFからデータを取得できませんでした' });
+    }
+
+    // 1. Claude API で変換（スキャンPDFの場合はpdfBase64をPDFドキュメントとして渡す）
+    var transformed = callClaudeAPI(text, pdfBase64);
 
     // 1.5 raw_performances → performance に正規化（複数出典の平均計算）
     //     ※ writeToSheet / postToWordPress の両方が data.performance を参照するため、
@@ -326,7 +334,7 @@ function esc(str) {
 // -------------------------------------------------------
 // Claude API 呼び出し
 // -------------------------------------------------------
-function callClaudeAPI(reportText) {
+function callClaudeAPI(reportText, pdfBase64) {
   var config = getConfig();
 
   var systemPrompt = 'あなたは生花専門店の店主をサポートするベテランアシスタントです。\n'
@@ -424,6 +432,24 @@ function callClaudeAPI(reportText) {
     + '- OCRが不完全で読み取れない部分は文脈から推測して自然な文章にする\n'
     + '- JSONの文字列値の中で改行を入れないこと（1つの値は1行の文字列にする）';
 
+  var promptText = '以下の花市場報告書を、生花専門店のお客様向け情報に変換してください。全品目を漏れなく、各項目は厚みのある文章でお願いします：\n\n' + reportText;
+
+  // スキャンPDF（テキストレイヤー無し）の場合は、PDFファイル自体をdocumentブロックとして渡す。
+  // pdfBase64が無い場合は従来通りテキストのみを渡す（後方互換）。
+  var messageContent = pdfBase64
+    ? [
+        {
+          type  : 'document',
+          source: {
+            type      : 'base64',
+            media_type: 'application/pdf',
+            data      : pdfBase64
+          }
+        },
+        { type: 'text', text: promptText }
+      ]
+    : promptText;
+
   var payload = {
     model      : 'claude-sonnet-5',
     max_tokens : 16000,
@@ -431,7 +457,7 @@ function callClaudeAPI(reportText) {
     messages   : [
       {
         role   : 'user',
-        content: '以下の花市場報告書を、生花専門店のお客様向け情報に変換してください。全品目を漏れなく、各項目は厚みのある文章でお願いします：\n\n' + reportText
+        content: messageContent
       }
     ]
   };
@@ -450,7 +476,10 @@ function callClaudeAPI(reportText) {
   var response = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', options);
   var result   = JSON.parse(response.getContentText());
 
-  if (result.error) throw new Error('Claude API エラー: ' + result.error.message);
+  if (result.error) {
+    Logger.log('Claude APIエラー詳細: ' + response.getContentText());
+    throw new Error('Claude API エラー: ' + result.error.message);
+  }
 
   var textContent = null;
   for (var i = 0; i < result.content.length; i++) {

@@ -297,7 +297,10 @@
     <div class="progress-steps">
       <div class="step" id="step1">
         <span class="step-icon">1</span>
-        <div class="step-body"><span class="step-label">PDFからテキストを抽出中...</span></div>
+        <div class="step-body">
+          <span class="step-label">PDFからテキストを抽出中...</span>
+          <span class="step-sub" id="step1sub"></span>
+        </div>
       </div>
       <div class="step" id="step2">
         <span class="step-icon">2</span>
@@ -413,6 +416,22 @@ async function extractPdfText(file) {
   return fullText;
 }
 
+// スキャンPDF（テキストレイヤー無し）用: ファイルをbase64文字列に変換
+// FileReader.readAsDataURL の結果は "data:application/pdf;base64,XXXX..." の形式なので
+// 先頭の "data:...;base64," 部分を除去して純粋なbase64文字列だけを返す
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = () => {
+      const result = reader.result;
+      const base64 = result.substring(result.indexOf(',') + 1);
+      resolve(base64);
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
 let timerInterval = null;
 let progressInterval = null;
 let elapsedSeconds = 0;
@@ -492,7 +511,17 @@ submitBtn.addEventListener('click', async () => {
 
   try {
     setStep(1);
+    document.getElementById('step1sub').textContent = '';
     const pdfText = await extractPdfText(selectedFile);
+
+    // 500文字未満はテキストレイヤーが無い（＝スキャンPDF）とみなす
+    let sendText  = pdfText;
+    let pdfBase64 = '';
+    if (pdfText.trim().length < 500) {
+      document.getElementById('step1sub').textContent = 'スキャンPDFを検出しました。画像として読み取ります';
+      pdfBase64 = await fileToBase64(selectedFile);
+      sendText  = '';
+    }
 
     setStep(2);
     startTimer();
@@ -502,10 +531,11 @@ submitBtn.addEventListener('click', async () => {
       method : 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body   : JSON.stringify({
-        text    : pdfText,
-        tabName : tabName || '花情報',
-        fileName: selectedFile.name,
-        postToWP: true
+        text     : sendText,
+        pdfBase64: pdfBase64,
+        tabName  : tabName || '花情報',
+        fileName : selectedFile.name,
+        postToWP : true
       })
     });
 
