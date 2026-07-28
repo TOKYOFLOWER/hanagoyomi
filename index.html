@@ -408,6 +408,8 @@ async function extractPdfText(file) {
     const content = await page.getTextContent();
     fullText += `\n--- ページ ${i} ---\n${content.items.map(item => item.str).join(' ')}\n`;
   }
+  console.log('抽出文字数:', fullText.length);
+  console.log('先頭300文字:', fullText.substring(0, 300));
   return fullText;
 }
 
