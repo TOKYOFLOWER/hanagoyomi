@@ -25,6 +25,7 @@ function getConfig() {
 // -------------------------------------------------------
 function doPost(e) {
   Logger.log('doPost開始: ' + JSON.stringify(Object.keys(e.parameter || {})));
+  var t0 = new Date();
   try {
     var data      = JSON.parse(e.postData.contents);
     var text      = data.text;
@@ -42,8 +43,22 @@ function doPost(e) {
       return jsonResponse({ status: 'error', message: 'PDFからデータを取得できませんでした' });
     }
 
-    // 1. Claude API で変換（スキャンPDFの場合はpdfBase64をPDFドキュメントとして渡す）
-    var transformed = callClaudeAPI(text, pdfBase64);
+    var config = getConfig();
+
+    // 0. スキャンPDFの場合はまずOCR書き起こし（2段階方式）
+    //    UrlFetchAppは1リクエスト約3分でタイムアウトするため、
+    //    「PDF読み取り」と「JSON生成」を別リクエストに分割する。
+    if (pdfBase64) {
+      text = transcribePdf(pdfBase64, config);
+      if (!text || text.length < 200) {
+        return jsonResponse({ status: 'error', message: 'PDFの読み取りに失敗しました' });
+      }
+      Logger.log('フェーズ1(PDF書き起こし)完了: ' + ((new Date() - t0) / 1000) + '秒');
+    }
+
+    // 1. Claude API で変換（callClaudeAPIにはpdfBase64を渡さず、従来のテキスト経路に合流）
+    var transformed = callClaudeAPI(text);
+    Logger.log('フェーズ2(JSON生成)完了: ' + ((new Date() - t0) / 1000) + '秒');
 
     // 1.5 raw_performances → performance に正規化（複数出典の平均計算）
     //     ※ writeToSheet / postToWordPress の両方が data.performance を参照するため、
@@ -85,15 +100,16 @@ function doPost(e) {
     }
 
     // 2. Google Sheets に書き込み
-    var config    = getConfig();
     var ss        = SpreadsheetApp.openById(config.SHEET_ID);
     var sheetName = tabName || generateTabName(fileName);
     var sheetResult = writeToSheet(ss, sheetName, transformed);
+    Logger.log('フェーズ3(Sheet書込)完了: ' + ((new Date() - t0) / 1000) + '秒');
 
     var wpResult = null;
     if (postToWP) {
       // 3. WordPress に投稿（カテゴリーID=9「市場レポート」固定）
       wpResult = postToWordPress(config, transformed, 9);
+      Logger.log('フェーズ4(WP投稿)完了: ' + ((new Date() - t0) / 1000) + '秒');
     }
 
     return jsonResponse({
@@ -332,6 +348,69 @@ function esc(str) {
 }
 
 // -------------------------------------------------------
+// PDF書き起こし（2段階方式・第1段階）
+// UrlFetchAppは1リクエスト約3分でタイムアウトするため、
+// 「PDF読み取り（OCR）」と「JSON生成」を別リクエストに分割する。
+// -------------------------------------------------------
+function transcribePdf(pdfBase64, config) {
+  var t0 = new Date();
+  Logger.log('書き起こし開始');
+
+  var payload = {
+    model      : 'claude-haiku-4-5-20251001',
+    max_tokens : 8000,
+    system     : 'あなたはOCRアシスタントです。渡されたPDFの全文を忠実に書き起こしてください。',
+    messages   : [
+      {
+        role   : 'user',
+        content: [
+          {
+            type  : 'document',
+            source: {
+              type      : 'base64',
+              media_type: 'application/pdf',
+              data      : pdfBase64
+            }
+          },
+          {
+            type: 'text',
+            text: 'この報告書の全文を書き起こしてください。表は1行ずつ「品目名｜内容」の形式で。\n数値・産地名・品目名は一字一句正確に。要約・省略・解釈は不要です。'
+          }
+        ]
+      }
+    ]
+  };
+
+  var options = {
+    method            : 'post',
+    headers           : {
+      'Content-Type'     : 'application/json',
+      'x-api-key'        : config.CLAUDE_API_KEY,
+      'anthropic-version': '2023-06-01'
+    },
+    payload           : JSON.stringify(payload),
+    muteHttpExceptions: true
+  };
+
+  var response = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', options);
+  var result   = JSON.parse(response.getContentText());
+
+  if (result.error) {
+    Logger.log('書き起こしAPIエラー詳細: ' + response.getContentText());
+    throw new Error('PDF書き起こしエラー: ' + result.error.message);
+  }
+
+  var textParts = (result.content || [])
+    .filter(function(b) { return b.type === 'text'; })
+    .map(function(b) { return b.text; });
+  var text = textParts.join('');
+
+  Logger.log('書き起こし完了: ' + text.length + '文字（' + ((new Date() - t0) / 1000) + '秒）');
+
+  return text;
+}
+
+// -------------------------------------------------------
 // Claude API 呼び出し
 // -------------------------------------------------------
 function callClaudeAPI(reportText, pdfBase64) {
@@ -452,7 +531,7 @@ function callClaudeAPI(reportText, pdfBase64) {
 
   var payload = {
     model      : 'claude-sonnet-5',
-    max_tokens : 32000,
+    max_tokens : 16000,
     system     : systemPrompt,
     messages   : [
       {
