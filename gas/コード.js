@@ -54,61 +54,96 @@ function callClaudeAPI(reportText) {
   var config = getConfig();
 
   var systemPrompt = 'あなたは生花専門店の店主をサポートするベテランアシスタントです。\n'
-    + '花市場（大田花き等）から届く業界向けの「販売状況・入荷見通し報告書」を読み取り、\n'
+    + '花市場から届く業界向けの「販売状況・入荷見通し報告書」を読み取り、\n'
     + '生花店の店頭でお客様にお伝えできる、読み応えのある情報に変換してください。\n\n'
+
+    + '■ 出典の判定ルール\n'
+    + '報告書に含まれる発行元を必ず確認し、以下のルールで sources フィールドに列挙する。\n'
+    + '- 「大田花き」「㈱大田花き」「OTA」が含まれる → "大田花き"\n'
+    + '- 「フラワーオークションジャパン」「FAJ」が含まれる → "フラワーオークションジャパン（FAJ）"\n'
+    + '- 両方含まれる場合は両方を配列に入れる\n'
+    + '- どちらか一方のみの場合はその1つだけ入れる\n\n'
+
     + '■ 月の判定ルール（最重要）\n'
-    + '報告書には「X月の実績・販売状況」と「Y月の見通し」が含まれています。\n'
-    + '- reportMonth = 実績が書かれている月（例：「2月の動き」「2月の販売状況」→ reportMonth は「2月」）\n'
-    + '- targetMonth = 見通しが書かれている月（例：「3月の見通し」「3月の入荷見通し」→ targetMonth は「3月」）\n'
-    + '- targetMonth は reportMonth の翌月になるのが通常です\n'
-    + '- お客様向け情報シートの主役は targetMonth（見通し月）です。タイトルや見出しには targetMonth を使ってください\n'
-    + '- salesSituation は reportMonth の振り返り、nextMonthOutlook は targetMonth の見通しです\n\n'
+    + '報告書のタイトルや本文から月を正確に読み取ること。\n'
+    + '- reportMonth : 実績・現状データの月（例：「5月の取り扱い実績」→ "5月"）\n'
+    + '- targetMonth : 主な見通しの月（reportMonthの翌月。例：reportMonthが5月 → "6月"）\n'
+    + '- nextNextMonth : 翌々月の見通しが報告書に記載されている場合のみ設定（例："7月"）。記載がなければ null\n'
+    + '例：6月月初提出の報告書 → reportMonth="5月"、targetMonth="6月"、nextNextMonth="7月"（記載があれば）\n\n'
+
+    + '■ 品目別の情報を分離する厳格なルール（最重要）\n'
+    + 'currentStatus と futureOutlook は必ず明確に分けること。混在させないこと。\n'
+    + '- currentStatus : reportMonth（先月）の実績・状況のみ記述。「〜でした」「〜となりました」など過去形で書く。今後の予測・見通しは一切含めない。\n'
+    + '- futureOutlook : targetMonth（今月）以降の見通しのみ記述。「〜の見込みです」「〜が期待されます」など将来形で書く。先月の実績は含めない。\n'
+    + '- nextNextMonthDetail : nextNextMonthの品目別見通しが報告書にある場合のみ記述。なければ null。\n\n'
+
     + '■ 変換の方針\n'
     + '- 業界用語（相場軟調、引き合い、止め市、単価高、ベースダウン、出回り等）は一般のお客様にわかる平易な言葉に完全に置き換える\n'
     + '- 生花専門店の立場から、お客様が花を選ぶ際に役立つ実用的な情報を提供する\n'
     + '- 入荷が少ない品目は「ご予約をおすすめします」「お早めにご相談ください」などポジティブに変換\n'
-    + '- 季節感やイベント（バレンタイン、卒業式、ひな祭り、お彼岸等）と結びつけた提案を積極的に\n'
+    + '- 季節感やイベント（母の日、お盆、彼岸、クリスマス等）と結びつけた提案を積極的に\n'
     + '- 各文章は十分な厚みを持たせ、具体的な情報（産地名、色、品種、用途）を盛り込む\n'
     + '- 絵文字は控えめに、ポイントとなる箇所に1つ程度\n\n'
+
     + '■ 出力形式（JSONのみ出力。```json等のマークダウン記法も不要。純粋なJSONだけ）\n\n'
     + '{\n'
-    + '  "reportMonth": "（実績月を入れる。例：2月）",\n'
-    + '  "targetMonth": "（見通し月を入れる。例：3月）",\n'
+    + '  "sources": ["大田花き"],\n'
+    + '  "reportMonth": "5月",\n'
+    + '  "targetMonth": "6月",\n'
+    + '  "nextNextMonth": null,\n'
     + '  "salesSituation": {\n'
-    + '    "title": "（reportMonth）月の花市場の動き",\n'
-    + '    "body": "reportMonth の市場全体の動きを4〜6文で。業界用語は使わず、生花店のお客様が読んで『なるほど』と思える内容に。産地の出荷状況、入荷量の傾向、季節商材の動き、需要の特徴などを盛り込む。"\n'
+    + '    "title": "reportMonthの花市場の動き",\n'
+    + '    "body": "reportMonthの市場全体の動きを4〜6文で。過去の実績として記述。産地の出荷状況、入荷量の傾向、季節商材の動き、需要の特徴などを盛り込む。targetMonth以降の話は含めない。"\n'
     + '  },\n'
     + '  "nextMonthOutlook": {\n'
-    + '    "title": "（targetMonth）月の見通し",\n'
-    + '    "body": "targetMonth の見通しを5〜7文で。季節のイベント情報、入荷の増減予測、おすすめ品目、ご予約のアドバイスなど、お客様が行動に移せる具体的な内容を。"\n'
+    + '    "title": "targetMonthの見通し",\n'
+    + '    "body": "targetMonthの見通しを5〜7文で。イベント情報、入荷の増減予測、おすすめ品目、ご予約のアドバイスなど、お客様が行動に移せる具体的な内容を。"\n'
     + '  },\n'
+    + '  "nextNextMonthOutlook": null,\n'
     + '  "weather": {\n'
-    + '    "title": "（targetMonth）月のお天気見通し",\n'
-    + '    "body": "気象予報を花の管理・来店の参考になる視点で3〜4文に。地域ごとの特徴も。"\n'
+    + '    "title": "targetMonthのお天気見通し",\n'
+    + '    "body": "気象予報を花の管理・来店の参考になる視点で3〜4文に。"\n'
     + '  },\n'
-    + '  "performance": {\n'
-    + '    "period": "（reportMonth。実績の月を入れる）",\n'
-    + '    "data": [\n'
-    + '      { "type": "切花", "quantity": "97%", "amount": "83%", "unitPrice": "85%" },\n'
-    + '      { "type": "鉢物", "quantity": "102%", "amount": "84%", "unitPrice": "82%" },\n'
-    + '      { "type": "合計", "quantity": "97%", "amount": "83%", "unitPrice": "85%" }\n'
-    + '    ],\n'
-    + '    "comment": "実績を踏まえたお客様向けの一言コメント2〜3文"\n'
-    + '  },\n'
+    + '  "raw_performances": [\n'
+    + '    {\n'
+    + '      "source": "大田花き",\n'
+    + '      "period": "5月",\n'
+    + '      "data": [\n'
+    + '        { "type": "切花", "quantity": 98, "amount": 117, "unitPrice": 119 },\n'
+    + '        { "type": "鉢物", "quantity": 98, "amount": 104, "unitPrice": 106 },\n'
+    + '        { "type": "合計", "quantity": 98, "amount": 116, "unitPrice": 118 }\n'
+    + '      ]\n'
+    + '    }\n'
+    + '  ],\n'
     + '  "items": [\n'
     + '    {\n'
     + '      "category": "周年品目 or 季節品目",\n'
     + '      "name": "品目名",\n'
-    + '      "currentStatus": "reportMonth の状況を3〜5文で詳しく。産地名、色、入荷の傾向、品質などの具体情報を含む。",\n'
-    + '      "futureOutlook": "targetMonth の見通しを3〜5文で詳しく。入荷量の増減予測、注目の品種・色、イベントとの関連、予約のおすすめなど。",\n'
-    + '      "recommendation": "おすすめポイント・用途提案を2〜3文。贈り物、お供え、自宅用など具体的なシーンを提案。"\n'
+    + '      "currentStatus": "【reportMonthの実績のみ】3〜5文。過去形で書く。産地名・色・入荷傾向・品質などを含む。targetMonth以降の情報は絶対に含めない。",\n'
+    + '      "futureOutlook": "【targetMonth以降の見通しのみ】3〜5文。将来形で書く。入荷予測・おすすめ品種・イベント活用・予約提案など。reportMonthの実績は絶対に含めない。",\n'
+    + '      "nextNextMonthDetail": null,\n'
+    + '      "recommendation": "おすすめポイント・用途提案を2〜3文。贈り物・お供え・自宅用など具体的なシーンを提案。"\n'
     + '    }\n'
     + '  ]\n'
     + '}\n\n'
+
+    + '■ raw_performances の記載ルール\n'
+    + '- 報告書に含まれる各社（大田花き・FAJ等）の実績を、それぞれ別オブジェクトとして配列に追加する\n'
+    + '- 数値は必ず整数の数値型で記載（%記号なし）。例：98, 117, 119\n'
+    + '- 数値が読み取れない場合は null を入れる\n'
+    + '- 大田花きのみなら配列に1要素、両社あれば2要素\n'
+    + '- "performance_comment": 実績を踏まえたお客様向けの一言コメント2〜3文をトップレベルに追加\n\n'
+
+    + '■ nextNextMonthOutlook の扱い\n'
+    + '- 報告書にnextNextMonth（翌々月）の見通しが記載されている場合：\n'
+    + '  nextNextMonthOutlook に { "title": "◯月の見通し", "body": "内容" } をセット\n'
+    + '  各itemのnextNextMonthDetailにも品目別の翌々月見通しをセット\n'
+    + '- 記載がない場合は両方 null のままにする\n\n'
+
     + '■ 重要\n'
-    + '- itemsには報告書の【全品目】を漏れなく含める（輪ギク、小ギク、SPギク、シンビジウム、バラ、カーネーション、テッポウユリ、オリエンタルユリ、LA/アジアンティックユリ、グラジオラス、アルストロメリア、スターチス、ガーベラ、トルコギキョウ（リシアンサス）、カスミソウ、フリージア、カラー、チューリップ、スイセン、ストック、スイートピー等）。1つも省略しないこと\n'
-    + '- currentStatusとfutureOutlookはそれぞれ必ず3文以上で厚みのある内容にすること\n'
-    + '- 産地名（愛知、静岡、高知、和歌山、熊本、茨城、群馬、長野、千葉、宮崎、鹿児島、九州等）は具体的に含める\n'
+    + '- itemsには報告書の【全品目】を漏れなく含める。1つも省略しないこと\n'
+    + '- currentStatusは必ず過去の実績のみ。futureOutlookは必ず将来の見通しのみ。混在厳禁\n'
+    + '- 産地名（愛知、静岡、高知、和歌山、熊本、茨城、群馬、長野、千葉、宮崎、鹿児島等）は具体的に含める\n'
     + '- 色の情報（白、ピンク、赤、黄色、紫等）も具体的に含める\n'
     + '- OCRが不完全で読み取れない部分は文脈から推測して自然な文章にする\n'
     + '- JSONの文字列値の中で改行を入れないこと（1つの値は1行の文字列にする）';
@@ -120,9 +155,7 @@ function callClaudeAPI(reportText) {
     messages: [
       {
         role: 'user',
-        content: '以下の花市場報告書を、生花専門店のお客様向け情報に変換してください。\n'
-          + '※ まず報告書から「実績月（reportMonth）」と「見通し月（targetMonth）」を特定してから変換してください。\n'
-          + '全品目を漏れなく、各項目は厚みのある文章でお願いします：\n\n' + reportText
+        content: '以下の花市場報告書を、生花専門店のお客様向け情報に変換してください。全品目を漏れなく、各項目は厚みのある文章でお願いします：\n\n' + reportText
       }
     ]
   };
@@ -212,6 +245,43 @@ function writeToSheet(ss, sheetName, data) {
   if (sheet) ss.deleteSheet(sheet);
   sheet = ss.insertSheet(sheetName);
 
+  // ===== raw_performances → performance に変換 =====
+  if (data.raw_performances && data.raw_performances.length > 0) {
+    var rps = data.raw_performances;
+    var types = ['切花', '鉢物', '合計'];
+    var fields = ['quantity', 'amount', 'unitPrice'];
+    var averaged = [];
+    var sourcesNote = rps.length > 1
+      ? rps.map(function(r){ return r.source; }).join('・') + ' 平均'
+      : rps[0].source;
+    var period = rps[0].period;
+
+    types.forEach(function(type) {
+      var row_data = { type: type };
+      fields.forEach(function(field) {
+        var vals = [];
+        rps.forEach(function(rp) {
+          var found = (rp.data || []).filter(function(d){ return d.type === type; })[0];
+          if (found && found[field] != null) vals.push(Number(found[field]));
+        });
+        if (vals.length > 0) {
+          var avg = Math.round(vals.reduce(function(a,b){ return a+b; }, 0) / vals.length);
+          row_data[field] = avg + '%';
+        } else {
+          row_data[field] = '-';
+        }
+      });
+      averaged.push(row_data);
+    });
+
+    data.performance = {
+      period: period,
+      sources_note: sourcesNote,
+      data: averaged,
+      comment: data.performance_comment || ''
+    };
+  }
+
   var C = {
     sage: '#4A7C59',
     sageDark: '#3D6B4C',
@@ -234,8 +304,17 @@ function writeToSheet(ss, sheetName, data) {
     .setBackground(C.sage).setHorizontalAlignment('center').setVerticalAlignment('middle');
   sheet.setRowHeight(row, 44);
   row++;
+
+  // 出典（sourcesが配列の場合は結合して表示）
+  var sourceText = '出典：';
+  if (data.sources && Array.isArray(data.sources) && data.sources.length > 0) {
+    sourceText += data.sources.join('・');
+  } else {
+    sourceText += '大田花き';
+  }
+  sourceText += ' 販売状況・入荷見通し等報告書 ／ hanagoyomi 自動変換';
   sheet.getRange(row, 1, 1, COLS).merge()
-    .setValue('出典：大田花き 販売状況・入荷見通し等報告書 ／ hanagoyomi 自動変換')
+    .setValue(sourceText)
     .setFontSize(9).setFontColor(C.warmGray).setHorizontalAlignment('center').setFontStyle('italic');
   row += 2;
 
@@ -259,6 +338,16 @@ function writeToSheet(ss, sheetName, data) {
     row += 2;
   }
 
+  // ===== 翌々月の見通し（記載がある場合のみ）=====
+  if (data.nextNextMonthOutlook && data.nextNextMonthOutlook.body) {
+    row = writeSectionHeader(sheet, row, COLS, '📅 ' + (data.nextNextMonthOutlook.title || (data.nextNextMonth + 'の見通し')), C);
+    sheet.getRange(row, 1, 1, COLS).merge()
+      .setValue(data.nextNextMonthOutlook.body).setWrap(true)
+      .setFontSize(10).setVerticalAlignment('top');
+    sheet.setRowHeight(row, 100);
+    row += 2;
+  }
+
   // ===== 気象予報 =====
   if (data.weather) {
     row = writeSectionHeader(sheet, row, COLS, '🌤 ' + (data.weather.title || '今月のお天気見通し'), C);
@@ -271,7 +360,9 @@ function writeToSheet(ss, sheetName, data) {
 
   // ===== 取扱実績 =====
   if (data.performance && data.performance.data) {
-    row = writeSectionHeader(sheet, row, COLS, '📊 ' + (data.performance.period || '') + 'の取り扱い実績（昨年対比）', C);
+    var perfTitle = '📊 ' + (data.performance.period || '') + 'の取り扱い実績（昨年対比）';
+    if (data.performance.sources_note) perfTitle += '　※' + data.performance.sources_note;
+    row = writeSectionHeader(sheet, row, COLS, perfTitle, C);
     sheet.getRange(row, 1, 1, 4).setValues([['区分', '入荷量', '金額', '単価']])
       .setFontWeight('bold').setFontSize(10).setFontColor(C.white)
       .setBackground(C.sageDark).setHorizontalAlignment('center');
@@ -299,11 +390,15 @@ function writeToSheet(ss, sheetName, data) {
   }
 
   // ===== 品目別テーブル =====
-  var colStatusLabel = (data.reportMonth || '先月') + 'の状況';
-  var colOutlookLabel = (data.targetMonth || '今後') + 'の見通し';
-  row = writeSectionHeader(sheet, row, COLS, '🌷 品目別 — ' + colStatusLabel + 'と' + colOutlookLabel, C);
+  var hasNextNext = data.nextNextMonth && data.items && data.items.some(function(it) { return it.nextNextMonthDetail; });
+  var itemCols = hasNextNext ? 6 : 5;
+  var tableTitle = '🌷 品目別 — ' + (data.reportMonth || '先月') + 'の状況と' + (data.targetMonth || '今月') + 'の見通し';
+  if (hasNextNext) tableTitle += '・' + data.nextNextMonth + 'の見通し';
+  row = writeSectionHeader(sheet, row, COLS, tableTitle, C);
 
-  sheet.getRange(row, 1, 1, COLS).setValues([['カテゴリ', '品目', colStatusLabel, colOutlookLabel, 'おすすめポイント']])
+  var headers = ['カテゴリ', '品目', data.reportMonth + 'の状況', data.targetMonth + 'の見通し', 'おすすめポイント'];
+  if (hasNextNext) headers.splice(4, 0, data.nextNextMonth + 'の見通し');
+  sheet.getRange(row, 1, 1, itemCols).setValues([headers])
     .setFontWeight('bold').setFontSize(10).setFontColor(C.white)
     .setBackground(C.sageDark).setHorizontalAlignment('center');
   sheet.setRowHeight(row, 30);
@@ -326,11 +421,16 @@ function writeToSheet(ss, sheetName, data) {
       sheet.getRange(row, 2).setValue(item.name).setFontWeight('bold').setFontSize(10);
       sheet.getRange(row, 3).setValue(item.currentStatus || '').setWrap(true).setFontSize(10);
       sheet.getRange(row, 4).setValue(item.futureOutlook || '').setWrap(true).setFontSize(10);
-      sheet.getRange(row, 5).setValue(item.recommendation || '').setWrap(true).setFontSize(10);
-      sheet.getRange(row, 1, 1, COLS).setVerticalAlignment('top');
+      if (hasNextNext) {
+        sheet.getRange(row, 5).setValue(item.nextNextMonthDetail || '').setWrap(true).setFontSize(10);
+        sheet.getRange(row, 6).setValue(item.recommendation || '').setWrap(true).setFontSize(10);
+      } else {
+        sheet.getRange(row, 5).setValue(item.recommendation || '').setWrap(true).setFontSize(10);
+      }
+      sheet.getRange(row, 1, 1, itemCols).setVerticalAlignment('top');
 
       if (idx % 2 === 0) {
-        sheet.getRange(row, 1, 1, COLS).setBackground(C.altRow);
+        sheet.getRange(row, 1, 1, itemCols).setBackground(C.altRow);
       }
       sheet.setRowHeight(row, 110);
       row++;
@@ -340,9 +440,14 @@ function writeToSheet(ss, sheetName, data) {
   // ===== 列幅 =====
   sheet.setColumnWidth(1, 85);
   sheet.setColumnWidth(2, 140);
-  sheet.setColumnWidth(3, 350);
-  sheet.setColumnWidth(4, 350);
-  sheet.setColumnWidth(5, 280);
+  sheet.setColumnWidth(3, 320);
+  sheet.setColumnWidth(4, 320);
+  if (hasNextNext) {
+    sheet.setColumnWidth(5, 280);
+    sheet.setColumnWidth(6, 240);
+  } else {
+    sheet.setColumnWidth(5, 260);
+  }
 
   // ===== 罫線 =====
   var lastRow = sheet.getLastRow();
