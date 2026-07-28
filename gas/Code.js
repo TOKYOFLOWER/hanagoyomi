@@ -452,7 +452,7 @@ function callClaudeAPI(reportText, pdfBase64) {
 
   var payload = {
     model      : 'claude-sonnet-5',
-    max_tokens : 16000,
+    max_tokens : 32000,
     system     : systemPrompt,
     messages   : [
       {
@@ -476,18 +476,26 @@ function callClaudeAPI(reportText, pdfBase64) {
   var response = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', options);
   var result   = JSON.parse(response.getContentText());
 
+  Logger.log('APIレスポンス構造: ' + JSON.stringify(result).substring(0, 1000));
+  Logger.log('stop_reason: ' + (result.stop_reason || 'なし'));
+
   if (result.error) {
     Logger.log('Claude APIエラー詳細: ' + response.getContentText());
     throw new Error('Claude API エラー: ' + result.error.message);
   }
 
-  var textContent = null;
-  for (var i = 0; i < result.content.length; i++) {
-    if (result.content[i].type === 'text') { textContent = result.content[i]; break; }
-  }
-  if (!textContent) throw new Error('Claude APIからの応答が空です');
+  // content配列全体からtype==='text'のブロックを集めて連結する
+  // （result.content[0]が必ずtextブロックとは限らないため）
+  var textParts = (result.content || [])
+    .filter(function(b) { return b.type === 'text'; })
+    .map(function(b) { return b.text; });
+  var responseText = textParts.join('');
 
-  return parseJsonResponse(textContent.text);
+  if (!responseText) {
+    throw new Error('Claude APIからの応答が空です（stop_reason: ' + (result.stop_reason || 'なし') + '）');
+  }
+
+  return parseJsonResponse(responseText);
 }
 
 // -------------------------------------------------------
